@@ -77,7 +77,7 @@ function onWindowLoad() {
   var message = document.querySelector('#message');
   chrome.tabs.getSelected(null,function(tab) {
     var tab = tab.url;
-    if(tab.indexOf("twitter.com/") != -1) {
+    if(tab.indexOf("twitter.com/") != -1 && tab.indexOf("status") != -1) {
       chrome.tabs.executeScript(null, {
         file: "getPagesSource.js"
       }, function() {
