@@ -1,6 +1,6 @@
 {
   "name": "Twitter GIF",
-  "version": "1.0",
+  "version": "1.2",
   "manifest_version": 2,
   "description": "Converts MP4s on Twitter into downloadable GIF",
   "browser_action": {

@@ -1,4 +1,4 @@
-var encoder;
+var encoder, flag, count = 0;
 
 chrome.extension.onMessage.addListener(function(request, sender) {
   if (request.action == "getSource") {
@@ -36,7 +36,7 @@ chrome.extension.onMessage.addListener(function(request, sender) {
         encoder = new GIFEncoder();
         encoder.setRepeat(0); //0  -> loop forever
                             //1+ -> loop n times then stop
-        encoder.setDelay(100); //go to next frame every n milliseconds
+//        encoder.setDelay(50); //go to next frame every n milliseconds
         encoder.start();
         v.play();
         draw(v,context,cw,ch);
@@ -48,11 +48,14 @@ chrome.extension.onMessage.addListener(function(request, sender) {
 
 function draw(v,c,w,h) {
   if(v.paused || v.ended) {
+    encoder.setDelay(v.duration/count);
     encoder.finish();
     var binary_gif = encoder.stream().getData() //notice this is different from the as3gif package!
     var data_url = 'data:image/gif;base64,'+encode64(binary_gif);
     var img = document.createElement("img");
     img.src = data_url;
+    img.style.width = w;
+    img.style.height = h;
 
     var a = document.createElement("a");
     a.href = data_url;
@@ -65,10 +68,14 @@ function draw(v,c,w,h) {
     message.appendChild(a);
     return false;
   }
-
-  c.drawImage(v,0,0,w,h);
-  encoder.addFrame(c);
-
+  if(flag) {
+    encoder.setSize(w, h);
+    flag = true;
+  } else {
+    count ++;
+    c.drawImage(v,0,0,w,h);
+    encoder.addFrame(c);
+  }
   setTimeout(draw,20,v,c,w,h);
 }
 
