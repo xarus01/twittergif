@@ -2,7 +2,6 @@ var encoder, flag, count = 0;
 
 chrome.extension.onMessage.addListener(function(request, sender) {
   if (request.action == "getSource") {
-//    message.innerText = request.source;
     parser=new DOMParser();
     htmlDoc=parser.parseFromString(request.source, "text/html");
     var vid = document.createElement("video");
@@ -17,7 +16,7 @@ chrome.extension.onMessage.addListener(function(request, sender) {
     canv.style.marginTop = "-999999px";
     message.appendChild(canv);
 
-    (function() {
+    vid.addEventListener('loadeddata', function() {
       var v = document.getElementById("video");
       v.pause();
       var canvas = document.getElementById('bitmap');
@@ -30,19 +29,26 @@ chrome.extension.onMessage.addListener(function(request, sender) {
       v.addEventListener('play', function(){
         cw = v.clientWidth;
         ch = v.clientHeight;
+
         canvas.width = cw;
         canvas.height = ch;
+
+        delete parser;
+        delete htmlDoc;
+        delete vid;
+        delete canv;
+        delete canvas;
 
         encoder = new GIFEncoder();
         encoder.setRepeat(0); //0  -> loop forever
                             //1+ -> loop n times then stop
-//        encoder.setDelay(50); //go to next frame every n milliseconds
+//        encoder.setQuality(20);
         encoder.start();
         v.play();
         draw(v,context,cw,ch);
       },false);
       v.play();
-    })();
+    }, false);
   }
 });
 
@@ -66,9 +72,16 @@ function draw(v,c,w,h) {
 
     message.innerText = "";
     message.appendChild(a);
+    delete message;
+    delete img;
+    delete a;
+    delete data_url;
+    delete binary_gif;
+    delete encoder;
+
     return false;
   }
-  if(flag) {
+  if(!flag) {
     encoder.setSize(w, h);
     flag = true;
   } else {
@@ -76,7 +89,8 @@ function draw(v,c,w,h) {
     c.drawImage(v,0,0,w,h);
     encoder.addFrame(c);
   }
-  setTimeout(draw,20,v,c,w,h);
+  var time = v.duration < 3.0 ? 50 : 80;
+  setTimeout(draw,time,v,c,w,h);
 }
 
 function onWindowLoad() {
@@ -88,7 +102,6 @@ function onWindowLoad() {
       chrome.tabs.executeScript(null, {
         file: "getPagesSource.js"
       }, function() {
-        // If you try and inject into an extensions page or the webstore/NTP you'll get an error
         if (chrome.extension.lastError) {
           message.innerText = 'There was an error : \n' + chrome.extension.lastError.message;
         }
